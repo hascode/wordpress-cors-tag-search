@@ -1,6 +1,6 @@
 <?php
-define('__ROOT__', dirname(dirname(__FILE__))); 
-require_once(__ROOT__.'/wp-config.php'); 
+define('__ROOT__', dirname(dirname(__FILE__)));
+require_once(__ROOT__.'/wp-config.php');
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
@@ -16,9 +16,9 @@ $tag = mysql_real_escape_string($_GET['tag']);
 $query = <<<EOF
 SELECT
  p.post_title AS title,
- SUBSTRING_INDEX(p.post_content, '<!--more-->', 1) AS content,
  REPLACE(p.guid, 'http://student.in/xyz/','http://www.hascode.com/') AS url,
- 'http://www.hascode.com/wp-content/themes/l2aelba-2/images/head.png' AS image
+ 'http://www.hascode.com/wp-content/themes/l2aelba-2/images/head.png' AS image,
+ CONCAT(SUBSTRING_INDEX(p.post_content, '<!--more-->', 1), "") AS excerpt
 FROM wp_terms t
 LEFT JOIN wp_term_relationships r
  ON t.term_id=r.term_taxonomy_id
@@ -35,26 +35,24 @@ GROUP BY p.ID
 ORDER BY p.post_title ASC;
 EOF;
 
-
 if (!($stmt = $mysqli->prepare($query))) {
-	exit();
+        exit();
 }
 
 if (!$stmt->bind_param("s", $tag)) {
-	exit();
+        exit();
 }
 
 if (!$stmt->execute()) {
-	exit();
+        exit();
 }
 
-$stmt->bind_result($title, $content, $url, $image);
+$stmt->bind_result($title, $url, $image, $excerpt);
 
 $root = array();
 
 while ($stmt->fetch()) {
-	$entry = array('title' => $title, 'content' => $content, 'url' => $url, 'image' => $image);
-	array_push($root, $entry);
+        array_push($root, array('title' => $title, 'url' => $url, 'image' => $image, 'excerpt' => strip_tags($excerpt)));
 }
 echo json_encode($root);
 $stmt->close();
