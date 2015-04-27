@@ -14,25 +14,23 @@ $tag = mysql_real_escape_string($_GET['tag']);
 //TODO: image url: IF(m.meta_key='_thumbnail_id', m.meta_value, 'http://www.hascode.com/wp-content/themes/l2aelba-2/images/head.png') AS image
 
 $query = <<<EOF
-SELECT
- p.post_title AS title,
- REPLACE(p.guid, 'http://student.in/xyz/','http://www.hascode.com/') AS url,
- 'http://www.hascode.com/wp-content/themes/l2aelba-2/images/head.png' AS image,
- CONCAT(SUBSTRING_INDEX(p.post_content, '<!--more-->', 1), "") AS excerpt
-FROM wp_terms t
-LEFT JOIN wp_term_relationships r
- ON t.term_id=r.term_taxonomy_id
-LEFT JOIN wp_term_taxonomy tx
- ON t.term_id=tx.term_id
-LEFT JOIN wp_posts p
- ON r.object_id=p.ID
-LEFT JOIN wp_postmeta m
- ON p.ID=m.post_id
+SELECT 
+  p.post_title AS title,
+  REPLACE(p.guid, 'http://student.in/xyz/','http://www.hascode.com/') AS url,
+  'http://www.hascode.com/wp-content/themes/l2aelba-2/images/head.png' AS image,
+  CONCAT(SUBSTRING_INDEX(p.post_content, '<!--more-->', 1), "") AS excerpt
+FROM wp_posts p
+INNER JOIN wp_term_relationships rel
+ ON p.ID=rel.object_id
+INNER JOIN wp_term_taxonomy tax
+ ON rel.term_taxonomy_id=tax.term_taxonomy_id
+INNER JOIN wp_terms t
+ ON tax.term_id=t.term_id
 WHERE p.post_type='post'
 AND p.post_status='publish'
-AND t.name = ?
+AND t.name=?
 GROUP BY p.ID
-ORDER BY p.post_title ASC;
+ORDER BY p.post_title ASC
 EOF;
 
 if (!($stmt = $mysqli->prepare($query))) {
